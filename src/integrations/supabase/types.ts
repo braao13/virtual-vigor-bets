@@ -269,6 +269,7 @@ export type Database = {
           current_win_streak: number
           email: string
           id: string
+          is_admin: boolean
           total_bets: number
           total_profit: number
           total_won: number
@@ -283,6 +284,7 @@ export type Database = {
           current_win_streak?: number
           email: string
           id: string
+          is_admin?: boolean
           total_bets?: number
           total_profit?: number
           total_won?: number
@@ -297,6 +299,7 @@ export type Database = {
           current_win_streak?: number
           email?: string
           id?: string
+          is_admin?: boolean
           total_bets?: number
           total_profit?: number
           total_won?: number

@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MyBetsRouteImport } from './routes/my-bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 
+const MyBetsRoute = MyBetsRouteImport.update({
+  id: '/my-bets',
+  path: '/my-bets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -32,35 +38,46 @@ const MatchesIdRoute = MatchesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/my-bets': typeof MyBetsRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/my-bets': typeof MyBetsRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/my-bets': typeof MyBetsRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/matches/$id'
+  fullPaths: '/' | '/auth' | '/my-bets' | '/matches/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/matches/$id'
-  id: '__root__' | '/' | '/auth' | '/matches/$id'
+  to: '/' | '/auth' | '/my-bets' | '/matches/$id'
+  id: '__root__' | '/' | '/auth' | '/my-bets' | '/matches/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  MyBetsRoute: typeof MyBetsRoute
   MatchesIdRoute: typeof MatchesIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/my-bets': {
+      id: '/my-bets'
+      path: '/my-bets'
+      fullPath: '/my-bets'
+      preLoaderRoute: typeof MyBetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  MyBetsRoute: MyBetsRoute,
   MatchesIdRoute: MatchesIdRoute,
 }
 export const routeTree = rootRouteImport

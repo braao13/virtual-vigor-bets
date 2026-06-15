@@ -3,6 +3,8 @@ export const BRL = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+export const formatCurrency = (n: number | string | null | undefined) => formatMoney(n);
+
 export function formatMoney(n: number | string | null | undefined) {
   if (n === null || n === undefined) return "—";
   const v = typeof n === "string" ? parseFloat(n) : n;

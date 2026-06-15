@@ -187,7 +187,9 @@ export type Database = {
           id: string
           is_read: boolean
           message: string
+          metadata: Json
           title: string
+          type: Database["public"]["Enums"]["notification_type"] | null
           user_id: string
         }
         Insert: {
@@ -195,7 +197,9 @@ export type Database = {
           id?: string
           is_read?: boolean
           message: string
+          metadata?: Json
           title: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
           user_id: string
         }
         Update: {
@@ -203,7 +207,9 @@ export type Database = {
           id?: string
           is_read?: boolean
           message?: string
+          metadata?: Json
           title?: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
           user_id?: string
         }
         Relationships: [
@@ -360,8 +366,51 @@ export type Database = {
         ]
       }
     }
+      leagues: {
+        Row: {
+          id: string; name: string; description: string | null; avatar_url: string | null
+          invite_code: string; owner_id: string; max_members: number; is_active: boolean
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; name: string; description?: string | null; avatar_url?: string | null
+          invite_code?: string; owner_id: string; max_members?: number; is_active?: boolean
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          id?: string; name?: string; description?: string | null; avatar_url?: string | null
+          invite_code?: string; owner_id?: string; max_members?: number; is_active?: boolean
+          created_at?: string; updated_at?: string
+        }
+        Relationships: [{ foreignKeyName: "leagues_owner_id_fkey"; columns: ["owner_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }]
+      }
+      league_members: {
+        Row: { id: string; league_id: string; user_id: string; role: Database["public"]["Enums"]["league_role"]; joined_at: string }
+        Insert: { id?: string; league_id: string; user_id: string; role?: Database["public"]["Enums"]["league_role"]; joined_at?: string }
+        Update: { id?: string; league_id?: string; user_id?: string; role?: Database["public"]["Enums"]["league_role"]; joined_at?: string }
+        Relationships: [
+          { foreignKeyName: "league_members_league_id_fkey"; columns: ["league_id"]; isOneToOne: false; referencedRelation: "leagues"; referencedColumns: ["id"] },
+          { foreignKeyName: "league_members_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+        ]
+      }
+      balance_reset_requests: {
+        Row: { id: string; user_id: string; reason: string | null; status: string; reviewed_by: string | null; reviewed_at: string | null; created_at: string }
+        Insert: { id?: string; user_id: string; reason?: string | null; status?: string; reviewed_by?: string | null; reviewed_at?: string | null; created_at?: string }
+        Update: { id?: string; user_id?: string; reason?: string | null; status?: string; reviewed_by?: string | null; reviewed_at?: string | null; created_at?: string }
+        Relationships: [{ foreignKeyName: "balance_reset_requests_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }]
+      }
+    }
     Views: {
-      [_ in never]: never
+      user_rankings: {
+        Row: {
+          id: string | null; username: string | null; avatar_url: string | null
+          balance: number | null; total_bets: number | null; total_won: number | null
+          total_profit: number | null; current_win_streak: number | null; best_win_streak: number | null
+          win_rate: number | null; weekly_profit: number | null; weekly_wins: number | null
+          monthly_profit: number | null; monthly_wins: number | null; created_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       place_bet: {
@@ -384,6 +433,11 @@ export type Database = {
         }
         Returns: Json
       }
+      join_league: { Args: { p_invite_code: string }; Returns: Json }
+      create_league: { Args: { p_name: string; p_description?: string }; Returns: Json }
+      request_balance_reset: { Args: { p_reason?: string }; Returns: undefined }
+      approve_balance_reset: { Args: { p_request_id: string }; Returns: undefined }
+      refresh_user_rankings: { Args: Record<string, never>; Returns: undefined }
       resolve_item_status: {
         Args: {
           p_market_type: string
@@ -401,6 +455,9 @@ export type Database = {
     }
     Enums: {
       bet_status: "pending" | "won" | "lost" | "cancelled" | "void"
+      league_role: "owner" | "admin" | "member"
+      invite_status: "pending" | "used" | "expired"
+      notification_type: "bet_settled_won" | "bet_settled_lost" | "bet_void" | "league_invite" | "member_joined" | "balance_reset"
       market_type:
         | "match_winner"
         | "double_chance"

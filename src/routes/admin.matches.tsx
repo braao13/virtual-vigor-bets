@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { CheckCircle2, Play, RefreshCw, Trophy, XCircle } from "lucide-react";
+import { CheckCircle2, Download, Play, RefreshCw, Wifi, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
 import { simulateMatchResult, settleBets } from "@/lib/settlement.functions";
+import { syncMatches } from "@/lib/sync.functions";
 import { formatMatchDate } from "@/utils/formatters";
 
 export const Route = createFileRoute("/admin/matches")({
@@ -39,6 +40,7 @@ function AdminMatches() {
   const qc = useQueryClient();
   const [scores, setScores] = useState<Record<string, { home: string; away: string; hCorners: string; aCorners: string; hCards: string; aCards: string }>>({});
   const [lastResult, setLastResult] = useState<SettlementResult | null>(null);
+  const [syncAction, setSyncAction] = useState<"odds" | "results" | "all">("all");
 
   const { data: matches, isLoading } = useQuery({
     queryKey: ["admin-matches"],
@@ -98,6 +100,26 @@ function AdminMatches() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const syncMut = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+      return syncMatches({ headers: { Authorization: `Bearer ${session.access_token}` }, data: { action: syncAction } });
+    },
+    onSuccess: (result: any) => {
+      qc.invalidateQueries({ queryKey: ["admin-matches"] });
+      const odds = result.odds_sync;
+      const res = result.results_sync;
+      const parts = [];
+      if (odds) parts.push(`${odds.matches} partidas · ${odds.odds} odds`);
+      if (res) parts.push(`${res.updated} resultados · ${res.settled} liquidados`);
+      toast.success(`Sincronizado: ${parts.join(" | ")}`);
+      if (odds?.errors?.length) toast.error(`Erros odds: ${odds.errors.slice(0, 2).join(", ")}`);
+      if (res?.errors?.length) toast.error(`Erros resultados: ${res.errors.slice(0, 2).join(", ")}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const setScore = (id: string, field: string, val: string) =>
     setScores((prev) => ({ ...prev, [id]: { home: "", away: "", hCorners: "", aCorners: "", hCards: "", aCards: "", ...prev[id], [field]: val } }));
 
@@ -109,16 +131,40 @@ function AdminMatches() {
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Painel Admin — Partidas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Simule resultados e liquide apostas pendentes.</p>
+          <p className="text-sm text-muted-foreground mt-1">Sincronize partidas e odds, simule resultados, liquide apostas.</p>
         </div>
-        <button
-          onClick={() => settleMut.mutate()}
-          disabled={settleMut.isPending}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${settleMut.isPending ? "animate-spin" : ""}`} />
-          Liquidar Apostas Agora
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Sync controls */}
+          <div className="flex items-center gap-1 rounded-lg border border-border p-1 bg-surface">
+            {(["all", "odds", "results"] as const).map((a) => (
+              <button
+                key={a}
+                onClick={() => setSyncAction(a)}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  syncAction === a ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {a === "all" ? "Tudo" : a === "odds" ? "Odds" : "Resultados"}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => syncMut.mutate()}
+            disabled={syncMut.isPending}
+            className="flex items-center gap-2 rounded-lg border border-primary text-primary px-4 py-2.5 text-sm font-bold hover:bg-primary/10 disabled:opacity-50 transition-colors"
+          >
+            <Wifi className={`h-4 w-4 ${syncMut.isPending ? "animate-pulse" : ""}`} />
+            {syncMut.isPending ? "Sincronizando..." : "Sincronizar APIs"}
+          </button>
+          <button
+            onClick={() => settleMut.mutate()}
+            disabled={settleMut.isPending}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${settleMut.isPending ? "animate-spin" : ""}`} />
+            Liquidar Apostas
+          </button>
+        </div>
       </header>
 
       {lastResult && (

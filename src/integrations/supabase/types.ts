@@ -14,16 +14,318 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bet_items: {
+        Row: {
+          bet_id: string
+          created_at: string
+          id: string
+          line: number | null
+          market_type: Database["public"]["Enums"]["market_type"]
+          match_id: string
+          odds_at_placement: number
+          selection: string
+          selection_label: string
+          settled_at: string | null
+          status: Database["public"]["Enums"]["bet_status"]
+        }
+        Insert: {
+          bet_id: string
+          created_at?: string
+          id?: string
+          line?: number | null
+          market_type: Database["public"]["Enums"]["market_type"]
+          match_id: string
+          odds_at_placement: number
+          selection: string
+          selection_label: string
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["bet_status"]
+        }
+        Update: {
+          bet_id?: string
+          created_at?: string
+          id?: string
+          line?: number | null
+          market_type?: Database["public"]["Enums"]["market_type"]
+          match_id?: string
+          odds_at_placement?: number
+          selection?: string
+          selection_label?: string
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["bet_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bet_items_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bet_items_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bets: {
+        Row: {
+          actual_return: number | null
+          bet_type: string
+          created_at: string
+          id: string
+          idempotency_key: string
+          potential_return: number
+          selections_count: number
+          settled_at: string | null
+          stake: number
+          status: Database["public"]["Enums"]["bet_status"]
+          total_odds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_return?: number | null
+          bet_type?: string
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          potential_return: number
+          selections_count?: number
+          settled_at?: string | null
+          stake: number
+          status?: Database["public"]["Enums"]["bet_status"]
+          total_odds: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_return?: number | null
+          bet_type?: string
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          potential_return?: number
+          selections_count?: number
+          settled_at?: string | null
+          stake?: number
+          status?: Database["public"]["Enums"]["bet_status"]
+          total_odds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          away_score: number | null
+          away_team: string
+          created_at: string
+          home_score: number | null
+          home_team: string
+          id: string
+          league_country: string | null
+          league_name: string
+          match_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          away_score?: number | null
+          away_team: string
+          created_at?: string
+          home_score?: number | null
+          home_team: string
+          id?: string
+          league_country?: string | null
+          league_name: string
+          match_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          away_score?: number | null
+          away_team?: string
+          created_at?: string
+          home_score?: number | null
+          home_team?: string
+          id?: string
+          league_country?: string | null
+          league_name?: string
+          match_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      odds_cache: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          line: number | null
+          market_type: Database["public"]["Enums"]["market_type"]
+          match_id: string
+          odds_value: number
+          selection: string
+          selection_label: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          line?: number | null
+          market_type: Database["public"]["Enums"]["market_type"]
+          match_id: string
+          odds_value: number
+          selection: string
+          selection_label: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          line?: number | null
+          market_type?: Database["public"]["Enums"]["market_type"]
+          match_id?: string
+          odds_value?: number
+          selection?: string
+          selection_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "odds_cache_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          balance: number
+          created_at: string
+          email: string
+          id: string
+          total_bets: number
+          total_profit: number
+          total_won: number
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          balance?: number
+          created_at?: string
+          email: string
+          id: string
+          total_bets?: number
+          total_profit?: number
+          total_won?: number
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          balance?: number
+          created_at?: string
+          email?: string
+          id?: string
+          total_bets?: number
+          total_profit?: number
+          total_won?: number
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          bet_id: string | null
+          created_at: string
+          description: string
+          id: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          bet_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          bet_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      place_bet: {
+        Args: { p_idempotency_key: string; p_selections: Json; p_stake: number }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      bet_status: "pending" | "won" | "lost" | "cancelled" | "void"
+      market_type:
+        | "match_winner"
+        | "double_chance"
+        | "both_teams_score"
+        | "goals_over_under"
+      transaction_type:
+        | "initial_deposit"
+        | "bet_placed"
+        | "bet_won"
+        | "bet_void"
+        | "balance_reset"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +452,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      bet_status: ["pending", "won", "lost", "cancelled", "void"],
+      market_type: [
+        "match_winner",
+        "double_chance",
+        "both_teams_score",
+        "goals_over_under",
+      ],
+      transaction_type: [
+        "initial_deposit",
+        "bet_placed",
+        "bet_won",
+        "bet_void",
+        "balance_reset",
+      ],
+    },
   },
 } as const

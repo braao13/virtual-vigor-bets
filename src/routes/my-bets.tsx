@@ -30,16 +30,25 @@ interface Bet {
   status: "pending" | "won" | "lost" | "cancelled" | "void";
   selections_count: number;
   created_at: string;
+  settled_at: string | null;
   bet_items: BetItem[];
 }
 
-const STATUS = {
-  pending: { label: "Pendente", icon: Clock, color: "text-warning" },
-  won: { label: "Ganha", icon: Trophy, color: "text-primary" },
-  lost: { label: "Perdida", icon: XCircle, color: "text-destructive" },
-  cancelled: { label: "Cancelada", icon: CircleSlash, color: "text-muted-foreground" },
-  void: { label: "Anulada", icon: CircleSlash, color: "text-muted-foreground" },
+const BET_STATUS = {
+  pending:   { label: "Pendente",  icon: Clock,        color: "text-warning" },
+  won:       { label: "Ganha",     icon: Trophy,       color: "text-primary" },
+  lost:      { label: "Perdida",   icon: XCircle,      color: "text-destructive" },
+  cancelled: { label: "Cancelada", icon: CircleSlash,  color: "text-muted-foreground" },
+  void:      { label: "Anulada",   icon: CircleSlash,  color: "text-muted-foreground" },
 } as const;
+
+const ITEM_STATUS: Record<string, { dot: string; label: string }> = {
+  pending: { dot: "bg-warning",           label: "Pendente" },
+  won:     { dot: "bg-primary",           label: "Ganha" },
+  lost:    { dot: "bg-destructive",       label: "Perdida" },
+  void:    { dot: "bg-muted-foreground",  label: "Anulada" },
+  cancelled: { dot: "bg-muted-foreground", label: "Cancelada" },
+};
 
 function MyBets() {
   const { user } = useAuth();
@@ -50,7 +59,7 @@ function MyBets() {
       const { data, error } = await supabase
         .from("bets")
         .select(
-          "id, stake, total_odds, potential_return, actual_return, status, selections_count, created_at, bet_items(selection_label, odds_at_placement, status, matches(home_team, away_team, match_date))",
+          "id, stake, total_odds, potential_return, actual_return, status, selections_count, created_at, settled_at, bet_items(selection_label, odds_at_placement, status, matches(home_team, away_team, match_date))",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -67,8 +76,11 @@ function MyBets() {
 
       <div className="space-y-3">
         {(bets ?? []).map((b) => {
-          const s = STATUS[b.status];
+          const s = BET_STATUS[b.status];
           const Icon = s.icon;
+          const isMultiple = b.selections_count > 1;
+          const profit = b.actual_return != null ? b.actual_return - b.stake : null;
+
           return (
             <article key={b.id} className="rounded-xl bg-card border border-border overflow-hidden">
               <header className="flex items-center justify-between bg-surface-2 px-4 py-2.5 border-b border-border">
@@ -76,7 +88,7 @@ function MyBets() {
                   <Icon className="h-4 w-4" />
                   <span className="uppercase tracking-wider">{s.label}</span>
                   <span className="text-muted-foreground font-normal">
-                    · {b.selections_count === 1 ? "Simples" : `Múltipla (${b.selections_count})`}
+                    · {isMultiple ? `Múltipla (${b.selections_count})` : "Simples"}
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground tabular-nums">
@@ -85,21 +97,40 @@ function MyBets() {
               </header>
 
               <div className="px-4 py-3 space-y-2">
-                {b.bet_items.map((it, i) => (
-                  <div key={i} className="flex items-start justify-between gap-2 text-sm">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{it.selection_label}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {it.matches
-                          ? `${it.matches.home_team} vs ${it.matches.away_team}`
-                          : "Partida indisponível"}
-                      </p>
+                {b.bet_items.map((it, i) => {
+                  const itemMeta = ITEM_STATUS[it.status] ?? ITEM_STATUS.pending;
+                  return (
+                    <div key={i} className="flex items-start justify-between gap-2 text-sm">
+                      <div className="min-w-0 flex items-start gap-2">
+                        {isMultiple && (
+                          <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${itemMeta.dot}`} title={itemMeta.label} />
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{it.selection_label}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {it.matches
+                              ? `${it.matches.home_team} vs ${it.matches.away_team}`
+                              : "Partida indisponível"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isMultiple && it.status !== "pending" && (
+                          <span className={`text-xs font-medium ${
+                            it.status === "won" ? "text-primary" :
+                            it.status === "lost" ? "text-destructive" :
+                            "text-muted-foreground"
+                          }`}>
+                            {itemMeta.label}
+                          </span>
+                        )}
+                        <span className="text-sm font-bold text-primary tabular-nums">
+                          {formatOdds(it.odds_at_placement)}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-sm font-bold text-primary tabular-nums shrink-0">
-                      {formatOdds(it.odds_at_placement)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <footer className="grid grid-cols-3 gap-2 px-4 py-3 border-t border-border bg-surface/40 text-xs">
@@ -108,21 +139,39 @@ function MyBets() {
                   <p className="font-bold tabular-nums">{formatMoney(b.stake)}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Odds</p>
+                  <p className="text-muted-foreground">Odds totais</p>
                   <p className="font-bold tabular-nums">{formatOdds(b.total_odds)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">
-                    {b.status === "won" ? "Recebido" : "Retorno potencial"}
+                    {b.status === "won" ? "Recebido" :
+                     b.status === "void" ? "Estornado" :
+                     "Retorno potencial"}
                   </p>
-                  <p
-                    className={`font-bold tabular-nums ${
-                      b.status === "won" ? "text-primary" : ""
-                    }`}
-                  >
+                  <p className={`font-bold tabular-nums ${
+                    b.status === "won" ? "text-primary" :
+                    b.status === "lost" ? "text-destructive" : ""
+                  }`}>
                     {formatMoney(b.actual_return ?? b.potential_return)}
                   </p>
                 </div>
+
+                {/* Profit / loss row */}
+                {profit != null && b.status !== "void" && (
+                  <div className="col-span-3 pt-2 border-t border-border/50 flex items-center justify-between">
+                    <span className="text-muted-foreground">
+                      {b.settled_at ? `Liquidada ${formatMatchDate(b.settled_at)}` : ""}
+                    </span>
+                    <span className={`font-bold tabular-nums ${profit >= 0 ? "text-primary" : "text-destructive"}`}>
+                      {profit >= 0 ? "+" : ""}{formatMoney(profit)}
+                    </span>
+                  </div>
+                )}
+                {b.status === "void" && b.settled_at && (
+                  <div className="col-span-3 pt-2 border-t border-border/50">
+                    <span className="text-muted-foreground">Liquidada {formatMatchDate(b.settled_at)}</span>
+                  </div>
+                )}
               </footer>
             </article>
           );

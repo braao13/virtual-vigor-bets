@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const selectionSchema = z.object({
   match_id: z.string().uuid(),
-  market_type: z.enum(["match_winner", "double_chance", "both_teams_score", "goals_over_under"]),
+  market_type: z.enum(["match_winner", "double_chance", "both_teams_score", "goals_over_under", "corners_over_under", "cards_over_under"]),
   selection: z.string().min(1).max(64),
   selection_label: z.string().min(1).max(128),
   odds_value: z.number().min(1.01).max(10000),

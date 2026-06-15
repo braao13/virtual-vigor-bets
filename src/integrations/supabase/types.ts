@@ -129,9 +129,13 @@ export type Database = {
       }
       matches: {
         Row: {
+          away_cards: number
+          away_corners: number
           away_score: number | null
           away_team: string
           created_at: string
+          home_cards: number
+          home_corners: number
           home_score: number | null
           home_team: string
           id: string
@@ -142,9 +146,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          away_cards?: number
+          away_corners?: number
           away_score?: number | null
           away_team: string
           created_at?: string
+          home_cards?: number
+          home_corners?: number
           home_score?: number | null
           home_team: string
           id?: string
@@ -155,9 +163,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          away_cards?: number
+          away_corners?: number
           away_score?: number | null
           away_team?: string
           created_at?: string
+          home_cards?: number
+          home_corners?: number
           home_score?: number | null
           home_team?: string
           id?: string
@@ -168,6 +180,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       odds_cache: {
         Row: {
@@ -217,7 +264,9 @@ export type Database = {
         Row: {
           avatar_url: string | null
           balance: number
+          best_win_streak: number
           created_at: string
+          current_win_streak: number
           email: string
           id: string
           total_bets: number
@@ -229,7 +278,9 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           balance?: number
+          best_win_streak?: number
           created_at?: string
+          current_win_streak?: number
           email: string
           id: string
           total_bets?: number
@@ -241,7 +292,9 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           balance?: number
+          best_win_streak?: number
           created_at?: string
+          current_win_streak?: number
           email?: string
           id?: string
           total_bets?: number
@@ -312,6 +365,36 @@ export type Database = {
         Args: { p_idempotency_key: string; p_selections: Json; p_stake: number }
         Returns: string
       }
+      settle_pending_bets: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      simulate_match_result: {
+        Args: {
+          p_match_id: string
+          p_home_score: number
+          p_away_score: number
+          p_home_corners?: number
+          p_away_corners?: number
+          p_home_cards?: number
+          p_away_cards?: number
+        }
+        Returns: Json
+      }
+      resolve_item_status: {
+        Args: {
+          p_market_type: string
+          p_selection: string
+          p_line: number | null
+          p_home_score: number
+          p_away_score: number
+          p_home_corners: number
+          p_away_corners: number
+          p_home_cards: number
+          p_away_cards: number
+        }
+        Returns: string
+      }
     }
     Enums: {
       bet_status: "pending" | "won" | "lost" | "cancelled" | "void"
@@ -320,6 +403,8 @@ export type Database = {
         | "double_chance"
         | "both_teams_score"
         | "goals_over_under"
+        | "corners_over_under"
+        | "cards_over_under"
       transaction_type:
         | "initial_deposit"
         | "bet_placed"
@@ -459,6 +544,8 @@ export const Constants = {
         "double_chance",
         "both_teams_score",
         "goals_over_under",
+        "corners_over_under",
+        "cards_over_under",
       ],
       transaction_type: [
         "initial_deposit",

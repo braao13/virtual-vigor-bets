@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as MyBetsRouteImport } from './routes/my-bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MyBetsRoute = MyBetsRouteImport.update({
   id: '/my-bets',
   path: '/my-bets',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/my-bets': typeof MyBetsRoute
+  '/wallet': typeof WalletRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/my-bets': typeof MyBetsRoute
+  '/wallet': typeof WalletRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRoutesById {
@@ -52,25 +60,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/my-bets': typeof MyBetsRoute
+  '/wallet': typeof WalletRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/my-bets' | '/matches/$id'
+  fullPaths: '/' | '/auth' | '/my-bets' | '/wallet' | '/matches/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/my-bets' | '/matches/$id'
-  id: '__root__' | '/' | '/auth' | '/my-bets' | '/matches/$id'
+  to: '/' | '/auth' | '/my-bets' | '/wallet' | '/matches/$id'
+  id: '__root__' | '/' | '/auth' | '/my-bets' | '/wallet' | '/matches/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   MyBetsRoute: typeof MyBetsRoute
+  WalletRoute: typeof WalletRoute
   MatchesIdRoute: typeof MatchesIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/my-bets': {
       id: '/my-bets'
       path: '/my-bets'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   MyBetsRoute: MyBetsRoute,
+  WalletRoute: WalletRoute,
   MatchesIdRoute: MatchesIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Crown, Medal, TrendingUp, Trophy, Users } from "lucide-react";
@@ -150,9 +150,13 @@ function RankingCard({
   const profit = tab === "global" ? row.total_profit : tab === "weekly" ? row.weekly_profit : row.monthly_profit;
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
-      isCurrentUser ? "border-primary/40 bg-primary/5" : "border-border bg-card hover:border-border/80"
-    }`}>
+    <Link
+      to="/profile/$username"
+      params={{ username: row.username }}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
+        isCurrentUser ? "border-primary/40 bg-primary/5" : "border-border bg-card hover:border-border/80 hover:bg-surface/50"
+      }`}
+    >
       <div className="w-6 flex items-center justify-center shrink-0">{positionEl}</div>
       <div className="h-9 w-9 rounded-full bg-surface flex items-center justify-center shrink-0 overflow-hidden">
         {row.avatar_url ? (
@@ -176,6 +180,6 @@ function RankingCard({
           {profit >= 0 ? "+" : ""}{formatCurrency(profit)}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

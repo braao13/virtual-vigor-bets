@@ -10,14 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MyBetsRouteImport } from './routes/my-bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
+import { Route as AdminMatchesRouteImport } from './routes/admin.matches'
 
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyBetsRoute = MyBetsRouteImport.update({
@@ -40,19 +47,28 @@ const MatchesIdRoute = MatchesIdRouteImport.update({
   path: '/matches/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMatchesRoute = AdminMatchesRouteImport.update({
+  id: '/admin/matches',
+  path: '/admin/matches',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/my-bets': typeof MyBetsRoute
+  '/notifications': typeof NotificationsRoute
   '/wallet': typeof WalletRoute
+  '/admin/matches': typeof AdminMatchesRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/my-bets': typeof MyBetsRoute
+  '/notifications': typeof NotificationsRoute
   '/wallet': typeof WalletRoute
+  '/admin/matches': typeof AdminMatchesRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRoutesById {
@@ -60,22 +76,48 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/my-bets': typeof MyBetsRoute
+  '/notifications': typeof NotificationsRoute
   '/wallet': typeof WalletRoute
+  '/admin/matches': typeof AdminMatchesRoute
   '/matches/$id': typeof MatchesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/my-bets' | '/wallet' | '/matches/$id'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/my-bets'
+    | '/notifications'
+    | '/wallet'
+    | '/admin/matches'
+    | '/matches/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/my-bets' | '/wallet' | '/matches/$id'
-  id: '__root__' | '/' | '/auth' | '/my-bets' | '/wallet' | '/matches/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/my-bets'
+    | '/notifications'
+    | '/wallet'
+    | '/admin/matches'
+    | '/matches/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/my-bets'
+    | '/notifications'
+    | '/wallet'
+    | '/admin/matches'
+    | '/matches/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   MyBetsRoute: typeof MyBetsRoute
+  NotificationsRoute: typeof NotificationsRoute
   WalletRoute: typeof WalletRoute
+  AdminMatchesRoute: typeof AdminMatchesRoute
   MatchesIdRoute: typeof MatchesIdRoute
 }
 
@@ -86,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-bets': {
@@ -116,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/matches': {
+      id: '/admin/matches'
+      path: '/admin/matches'
+      fullPath: '/admin/matches'
+      preLoaderRoute: typeof AdminMatchesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -123,7 +179,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   MyBetsRoute: MyBetsRoute,
+  NotificationsRoute: NotificationsRoute,
   WalletRoute: WalletRoute,
+  AdminMatchesRoute: AdminMatchesRoute,
   MatchesIdRoute: MatchesIdRoute,
 }
 export const routeTree = rootRouteImport

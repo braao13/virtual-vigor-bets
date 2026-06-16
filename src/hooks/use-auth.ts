@@ -11,6 +11,7 @@ export interface Profile {
   total_bets: number;
   total_won: number;
   total_profit: number;
+  is_admin: boolean;
 }
 
 export function useAuth() {

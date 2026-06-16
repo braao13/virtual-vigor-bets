@@ -9,7 +9,7 @@ import { formatMatchDate, relativeDate } from "@/utils/formatters";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CoelhoBet — Partidas em destaque" },
+      { title: "Rabbet — Partidas em destaque" },
       { name: "description", content: "Veja as próximas partidas e aposte com saldo virtual." },
     ],
   }),

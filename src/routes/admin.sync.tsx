@@ -11,7 +11,7 @@ import { syncApiFootballFixtures, syncApiFootballResults } from "@/lib/apifootba
 import { formatMatchDate } from "@/utils/formatters";
 
 export const Route = createFileRoute("/admin/sync")({
-  head: () => ({ meta: [{ title: "Admin — Sync APIs · CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Admin — Sync APIs · Rabbet" }] }),
   component: () => (
     <AppShell>
       <AdminSync />

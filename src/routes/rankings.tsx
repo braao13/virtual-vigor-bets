@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/utils/formatters";
 
 export const Route = createFileRoute("/rankings")({
-  head: () => ({ meta: [{ title: "Rankings · CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Rankings · Rabbet" }] }),
   component: () => (
     <AppShell>
       <RankingsPage />

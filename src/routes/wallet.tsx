@@ -7,7 +7,7 @@ import { useAuth, type Profile } from "@/hooks/use-auth";
 import { formatMoney, formatMatchDate } from "@/utils/formatters";
 
 export const Route = createFileRoute("/wallet")({
-  head: () => ({ meta: [{ title: "Carteira — CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Carteira — Rabbet" }] }),
   component: () => (
     <AppShell>
       <WalletPage />

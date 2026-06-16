@@ -8,7 +8,7 @@ import { useBetSlip } from "@/contexts/bet-slip-context";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/bets/share/$id")({
-  head: () => ({ meta: [{ title: "Aposta compartilhada · CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Aposta compartilhada · Rabbet" }] }),
   component: SharedBetPage,
 });
 
@@ -105,7 +105,7 @@ function SharedBetPage() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <Link to="/" className="flex items-center gap-2 font-bold text-primary text-lg">CoelhoBet</Link>
+          <Link to="/" className="flex items-center gap-2 font-bold text-primary text-lg">Rabbet</Link>
           <button onClick={copyLink}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <Copy className="h-4 w-4" />

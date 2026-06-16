@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/utils/formatters";
 
 export const Route = createFileRoute("/leagues/$id")({
-  head: () => ({ meta: [{ title: "Liga · CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Liga · Rabbet" }] }),
   component: () => (
     <AppShell>
       <LeagueDetailPage />

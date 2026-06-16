@@ -10,7 +10,7 @@ import { syncMatches } from "@/lib/sync.functions";
 import { formatMatchDate } from "@/utils/formatters";
 
 export const Route = createFileRoute("/admin/matches")({
-  head: () => ({ meta: [{ title: "Admin — Partidas · CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Admin — Partidas · Rabbet" }] }),
   component: () => (
     <AppShell>
       <AdminMatches />

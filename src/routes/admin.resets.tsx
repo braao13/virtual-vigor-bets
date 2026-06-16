@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatMatchDate } from "@/utils/formatters";
 
 export const Route = createFileRoute("/admin/resets")({
-  head: () => ({ meta: [{ title: "Admin — Reset de Saldo · CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Admin — Reset de Saldo · Rabbet" }] }),
   component: () => (
     <AppShell>
       <AdminResets />

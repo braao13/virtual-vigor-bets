@@ -8,7 +8,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/leagues")({
-  head: () => ({ meta: [{ title: "Ligas · CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Ligas · Rabbet" }] }),
   component: () => (
     <AppShell>
       <LeaguesPage />

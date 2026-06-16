@@ -145,22 +145,18 @@ export const syncMatches = createServerFn({ method: "POST" })
           if (new Date(event.commence_time) <= new Date()) continue;
 
           // Upsert match
-          const { data: match, error: matchError } = await supabaseAdmin
-            .from("matches")
-            .upsert(
-              {
-                home_team: event.home_team,
-                away_team: event.away_team,
-                league_name: event.sport_title,
-                league_country: null,
-                match_date: event.commence_time,
-                status: "not_started",
-              },
-              { onConflict: "home_team,away_team,match_date", ignoreDuplicates: false },
-            )
-            .select("id")
-            .single();
-
+         const { data: match, error: matchError } = await supabaseAdmin
+  .from("matches")
+  .insert({
+    home_team: event.home_team,
+    away_team: event.away_team,
+    league_name: event.sport_title,
+    league_country: null,
+    match_date: event.commence_time,
+    status: "not_started",
+  })
+  .select("id")
+  .single();
           if (matchError || !match) {
             result.errors.push(`[${sport}] match upsert: ${matchError?.message}`);
             continue;

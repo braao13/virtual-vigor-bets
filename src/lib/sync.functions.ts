@@ -1,10 +1,91 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+interface OddsAPIEvent {
+  id: string;
+  sport_key: string;
+  sport_title: string;
+  commence_time: string;
+  home_team: string;
+  away_team: string;
+  bookmakers: OddsAPIBookmaker[];
+}
+
+interface OddsAPIBookmaker {
+  key: string;
+  title: string;
+  markets: OddsAPIMarket[];
+}
+
+interface OddsAPIMarket {
+  key: string;
+  outcomes: OddsAPIOutcome[];
+}
+
+interface OddsAPIOutcome {
+  name: string;
+  price: number;
+  point?: number;
+}
+
 interface SyncResult {
   matches_upserted: number;
   odds_upserted: number;
   errors: string[];
+}
+
+const ODDS_API_BASE = "https://api.the-odds-api.com/v4";
+
+const SPORTS = [
+  "soccer_brazil_campeonato",
+  "soccer_epl",
+  "soccer_spain_la_liga",
+  "soccer_italy_serie_a",
+  "soccer_germany_bundesliga",
+  "soccer_france_ligue_one",
+  "soccer_uefa_champs_league",
+  "soccer_conmebol_copa_libertadores",
+];
+
+const MARKET_MAP: Record<string, string> = {
+  h2h: "match_winner",
+  doubleChance: "double_chance",
+  btts: "both_teams_score",
+  totals: "goals_over_under",
+};
+
+function buildSelection(
+  market: string,
+  outcomeName: string,
+  homeTeam: string,
+  awayTeam: string,
+  point?: number,
+): { selection: string; label: string } {
+  switch (market) {
+    case "match_winner": {
+      if (outcomeName === homeTeam) return { selection: "home", label: "Casa" };
+      if (outcomeName === awayTeam) return { selection: "away", label: "Fora" };
+      return { selection: "draw", label: "Empate" };
+    }
+    case "double_chance": {
+      if (outcomeName === "1X") return { selection: "home_draw", label: "Casa ou Empate" };
+      if (outcomeName === "X2") return { selection: "away_draw", label: "Fora ou Empate" };
+      return { selection: "home_away", label: "Casa ou Fora" };
+    }
+    case "both_teams_score": {
+      const isYes = outcomeName === "Yes";
+      return { selection: isYes ? "yes" : "no", label: isYes ? "Sim" : "Nao" };
+    }
+    case "goals_over_under": {
+      const isOver = outcomeName === "Over";
+      return {
+        selection: isOver ? "over" : "under",
+        label: isOver ? `Mais de ${point}` : `Menos de ${point}`,
+      };
+    }
+    default:
+      return { selection: outcomeName.toLowerCase(), label: outcomeName };
+  }
 }
 
 export const syncMatchesAndOdds = createServerFn({ method: "POST" })
@@ -27,59 +108,118 @@ export const syncMatchesAndOdds = createServerFn({ method: "POST" })
     const result: SyncResult = { matches_upserted: 0, odds_upserted: 0, errors: [] };
 
     if (!ODDS_API_KEY) {
-      result.errors.push("ODDS_API_KEY não encontrada");
+      result.errors.push("ODDS_API_KEY nao encontrada");
       return result;
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const sport = "soccer_brazil_campeonato";
+    for (const sport of SPORTS) {
+      try {
+        const url = `${ODDS_API_BASE}/sports/${sport}/odds/?apiKey=${ODDS_API_KEY}&regions=eu&markets=h2h,doubleChance,btts,totals&oddsFormat=decimal&dateFormat=iso`;
+        const res = await fetch(url);
 
-    try {
-      const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds/?apiKey=${ODDS_API_KEY}&regions=eu&markets=h2h&oddsFormat=decimal&dateFormat=iso`;
+        if (res.status === 422 || res.status === 404) continue;
 
-      result.errors.push(`[DEBUG] Chamando: ${url.replace(ODDS_API_KEY, "***")}`);
-
-      const res = await fetch(url);
-      result.errors.push(`[DEBUG] Status: ${res.status}`);
-
-      if (!res.ok) {
-        const text = await res.text();
-        result.errors.push(`[DEBUG] Body: ${text.slice(0, 200)}`);
-        return result;
-      }
-
-      const events = await res.json();
-      result.errors.push(`[DEBUG] Eventos recebidos: ${events.length}`);
-
-      for (const event of events) {
-        if (new Date(event.commence_time) <= new Date()) continue;
-
-        const { data: match, error: matchError } = await supabaseAdmin
-          .from("matches")
-          .insert({
-            home_team: event.home_team,
-            away_team: event.away_team,
-            league_name: event.sport_title,
-            league_country: "Brasil",
-            match_date: event.commence_time,
-            status: "not_started",
-          })
-          .select("id")
-          .single();
-
-        if (matchError) {
-          result.errors.push(`[match error] ${matchError.message}`);
+        if (!res.ok) {
+          result.errors.push(`[${sport}] HTTP ${res.status}`);
           continue;
         }
 
-        result.matches_upserted++;
+        const events: OddsAPIEvent[] = await res.json();
+
+        for (const event of events) {
+          if (new Date(event.commence_time) <= new Date()) continue;
+
+          const { data: match, error: matchError } = await supabaseAdmin
+            .from("matches")
+            .insert({
+              home_team: event.home_team,
+              away_team: event.away_team,
+              league_name: event.sport_title,
+              league_country: null,
+              match_date: event.commence_time,
+              status: "not_started",
+            })
+            .select("id")
+            .single();
+
+          let matchId: string | null = match?.id ?? null;
+
+          if (matchError) {
+            const { data: existing } = await supabaseAdmin
+              .from("matches")
+              .select("id")
+              .eq("home_team", event.home_team)
+              .eq("away_team", event.away_team)
+              .eq("match_date", event.commence_time)
+              .maybeSingle();
+
+            if (!existing) {
+              result.errors.push(`[${sport}] match: ${matchError.message}`);
+              continue;
+            }
+
+            matchId = existing.id;
+
+            await supabaseAdmin
+              .from("odds_cache")
+              .update({ is_active: false })
+              .eq("match_id", matchId);
+          } else {
+            result.matches_upserted++;
+          }
+
+          if (!matchId) continue;
+
+          const bookmaker = event.bookmakers.sort(
+            (a, b) => b.markets.length - a.markets.length,
+          )[0];
+
+          if (!bookmaker) continue;
+
+          for (const market of bookmaker.markets) {
+            const marketType = MARKET_MAP[market.key];
+            if (!marketType) continue;
+
+            const oddsRows = market.outcomes
+              .map((o) => {
+                const { selection, label } = buildSelection(
+                  marketType,
+                  o.name,
+                  event.home_team,
+                  event.away_team,
+                  o.point,
+                );
+                return {
+                  match_id: matchId as string,
+                  market_type: marketType as never,
+                  selection,
+                  selection_label: label,
+                  odds_value: Math.round(o.price * 100) / 100,
+                  line: o.point ?? null,
+                  is_active: true,
+                };
+              })
+              .filter((r) => r.odds_value >= 1.01);
+
+            if (!oddsRows.length) continue;
+
+            const { error: oddsError } = await supabaseAdmin
+              .from("odds_cache")
+              .insert(oddsRows);
+
+            if (oddsError) {
+              result.errors.push(`[${sport}] odds: ${oddsError.message}`);
+            } else {
+              result.odds_upserted += oddsRows.length;
+            }
+          }
+        }
+      } catch (err) {
+        result.errors.push(`[${sport}] ${String(err)}`);
       }
-    } catch (err) {
-      result.errors.push(`[catch] ${String(err)}`);
     }
 
     return result;
   });
-
-export const syncMatches = syncMatchesAndOdds;

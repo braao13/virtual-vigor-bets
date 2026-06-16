@@ -100,7 +100,7 @@ function buildSelectionLabel(
 
 // ─── Server Function ──────────────────────────────────────────────────────────
 
-export const syncMatchesAndOdds = createServerFn({ method: "POST" })
+export const syncMatches = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SyncResult> => {
     const { supabase } = context;
@@ -227,3 +227,5 @@ export const syncMatchesAndOdds = createServerFn({ method: "POST" })
 
     return result;
   });
+
+export const syncMatchesAndOdds = syncMatches;

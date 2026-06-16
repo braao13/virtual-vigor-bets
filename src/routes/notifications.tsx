@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatMatchDate } from "@/utils/formatters";
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({ meta: [{ title: "Notificações — CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Notificações — Rabbet" }] }),
   component: () => (
     <AppShell>
       <NotificationsPage />

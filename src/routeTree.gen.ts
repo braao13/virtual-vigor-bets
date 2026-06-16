@@ -20,9 +20,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 import { Route as LeaguesIdRouteImport } from './routes/leagues.$id'
-import { Route as BetsShareIdRouteImport } from './routes/bets.share.$id'
+import { Route as AdminSyncRouteImport } from './routes/admin.sync'
 import { Route as AdminResetsRouteImport } from './routes/admin.resets'
 import { Route as AdminMatchesRouteImport } from './routes/admin.matches'
+import { Route as BetsShareIdRouteImport } from './routes/bets.share.$id'
 
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
@@ -65,9 +66,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
-  id: '/profile/$username',
-  path: '/profile/$username',
-  getParentRoute: () => rootRouteImport,
+  id: '/$username',
+  path: '/$username',
+  getParentRoute: () => ProfileRoute,
 } as any)
 const MatchesIdRoute = MatchesIdRouteImport.update({
   id: '/matches/$id',
@@ -75,13 +76,13 @@ const MatchesIdRoute = MatchesIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeaguesIdRoute = LeaguesIdRouteImport.update({
-  id: '/leagues/$id',
-  path: '/leagues/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LeaguesRoute,
 } as any)
-const BetsShareIdRoute = BetsShareIdRouteImport.update({
-  id: '/bets/share/$id',
-  path: '/bets/share/$id',
+const AdminSyncRoute = AdminSyncRouteImport.update({
+  id: '/admin/sync',
+  path: '/admin/sync',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminResetsRoute = AdminResetsRouteImport.update({
@@ -94,55 +95,63 @@ const AdminMatchesRoute = AdminMatchesRouteImport.update({
   path: '/admin/matches',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BetsShareIdRoute = BetsShareIdRouteImport.update({
+  id: '/bets/share/$id',
+  path: '/bets/share/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/leagues': typeof LeaguesRoute
+  '/leagues': typeof LeaguesRouteWithChildren
   '/my-bets': typeof MyBetsRoute
   '/notifications': typeof NotificationsRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/rankings': typeof RankingsRoute
   '/wallet': typeof WalletRoute
   '/admin/matches': typeof AdminMatchesRoute
   '/admin/resets': typeof AdminResetsRoute
-  '/bets/share/$id': typeof BetsShareIdRoute
+  '/admin/sync': typeof AdminSyncRoute
   '/leagues/$id': typeof LeaguesIdRoute
   '/matches/$id': typeof MatchesIdRoute
   '/profile/$username': typeof ProfileUsernameRoute
+  '/bets/share/$id': typeof BetsShareIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/leagues': typeof LeaguesRoute
+  '/leagues': typeof LeaguesRouteWithChildren
   '/my-bets': typeof MyBetsRoute
   '/notifications': typeof NotificationsRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/rankings': typeof RankingsRoute
   '/wallet': typeof WalletRoute
   '/admin/matches': typeof AdminMatchesRoute
   '/admin/resets': typeof AdminResetsRoute
-  '/bets/share/$id': typeof BetsShareIdRoute
+  '/admin/sync': typeof AdminSyncRoute
   '/leagues/$id': typeof LeaguesIdRoute
   '/matches/$id': typeof MatchesIdRoute
   '/profile/$username': typeof ProfileUsernameRoute
+  '/bets/share/$id': typeof BetsShareIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/leagues': typeof LeaguesRoute
+  '/leagues': typeof LeaguesRouteWithChildren
   '/my-bets': typeof MyBetsRoute
   '/notifications': typeof NotificationsRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/rankings': typeof RankingsRoute
   '/wallet': typeof WalletRoute
   '/admin/matches': typeof AdminMatchesRoute
   '/admin/resets': typeof AdminResetsRoute
-  '/bets/share/$id': typeof BetsShareIdRoute
+  '/admin/sync': typeof AdminSyncRoute
   '/leagues/$id': typeof LeaguesIdRoute
   '/matches/$id': typeof MatchesIdRoute
   '/profile/$username': typeof ProfileUsernameRoute
+  '/bets/share/$id': typeof BetsShareIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,10 +166,11 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/admin/matches'
     | '/admin/resets'
-    | '/bets/share/$id'
+    | '/admin/sync'
     | '/leagues/$id'
     | '/matches/$id'
     | '/profile/$username'
+    | '/bets/share/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -173,10 +183,11 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/admin/matches'
     | '/admin/resets'
-    | '/bets/share/$id'
+    | '/admin/sync'
     | '/leagues/$id'
     | '/matches/$id'
     | '/profile/$username'
+    | '/bets/share/$id'
   id:
     | '__root__'
     | '/'
@@ -189,27 +200,27 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/admin/matches'
     | '/admin/resets'
-    | '/bets/share/$id'
+    | '/admin/sync'
     | '/leagues/$id'
     | '/matches/$id'
     | '/profile/$username'
+    | '/bets/share/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
-  LeaguesRoute: typeof LeaguesRoute
+  LeaguesRoute: typeof LeaguesRouteWithChildren
   MyBetsRoute: typeof MyBetsRoute
   NotificationsRoute: typeof NotificationsRoute
-  ProfileRoute: typeof ProfileRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   RankingsRoute: typeof RankingsRoute
   WalletRoute: typeof WalletRoute
   AdminMatchesRoute: typeof AdminMatchesRoute
   AdminResetsRoute: typeof AdminResetsRoute
-  BetsShareIdRoute: typeof BetsShareIdRoute
-  LeaguesIdRoute: typeof LeaguesIdRoute
+  AdminSyncRoute: typeof AdminSyncRoute
   MatchesIdRoute: typeof MatchesIdRoute
-  ProfileUsernameRoute: typeof ProfileUsernameRoute
+  BetsShareIdRoute: typeof BetsShareIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,10 +283,10 @@ declare module '@tanstack/react-router' {
     }
     '/profile/$username': {
       id: '/profile/$username'
-      path: '/profile/$username'
+      path: '/$username'
       fullPath: '/profile/$username'
       preLoaderRoute: typeof ProfileUsernameRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ProfileRoute
     }
     '/matches/$id': {
       id: '/matches/$id'
@@ -286,16 +297,16 @@ declare module '@tanstack/react-router' {
     }
     '/leagues/$id': {
       id: '/leagues/$id'
-      path: '/leagues/$id'
+      path: '/$id'
       fullPath: '/leagues/$id'
       preLoaderRoute: typeof LeaguesIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof LeaguesRoute
     }
-    '/bets/share/$id': {
-      id: '/bets/share/$id'
-      path: '/bets/share/$id'
-      fullPath: '/bets/share/$id'
-      preLoaderRoute: typeof BetsShareIdRouteImport
+    '/admin/sync': {
+      id: '/admin/sync'
+      path: '/admin/sync'
+      fullPath: '/admin/sync'
+      preLoaderRoute: typeof AdminSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/resets': {
@@ -312,24 +323,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMatchesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bets/share/$id': {
+      id: '/bets/share/$id'
+      path: '/bets/share/$id'
+      fullPath: '/bets/share/$id'
+      preLoaderRoute: typeof BetsShareIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface LeaguesRouteChildren {
+  LeaguesIdRoute: typeof LeaguesIdRoute
+}
+
+const LeaguesRouteChildren: LeaguesRouteChildren = {
+  LeaguesIdRoute: LeaguesIdRoute,
+}
+
+const LeaguesRouteWithChildren =
+  LeaguesRoute._addFileChildren(LeaguesRouteChildren)
+
+interface ProfileRouteChildren {
+  ProfileUsernameRoute: typeof ProfileUsernameRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileUsernameRoute: ProfileUsernameRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
-  LeaguesRoute: LeaguesRoute,
+  LeaguesRoute: LeaguesRouteWithChildren,
   MyBetsRoute: MyBetsRoute,
   NotificationsRoute: NotificationsRoute,
-  ProfileRoute: ProfileRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   RankingsRoute: RankingsRoute,
   WalletRoute: WalletRoute,
   AdminMatchesRoute: AdminMatchesRoute,
   AdminResetsRoute: AdminResetsRoute,
-  BetsShareIdRoute: BetsShareIdRoute,
-  LeaguesIdRoute: LeaguesIdRoute,
+  AdminSyncRoute: AdminSyncRoute,
   MatchesIdRoute: MatchesIdRoute,
-  ProfileUsernameRoute: ProfileUsernameRoute,
+  BetsShareIdRoute: BetsShareIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

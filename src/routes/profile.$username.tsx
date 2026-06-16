@@ -8,7 +8,7 @@ import { formatCurrency } from "@/utils/formatters";
 
 export const Route = createFileRoute("/profile/$username")({
   head: ({ params }) => ({
-    meta: [{ title: `${params.username} · CoelhoBet` }],
+    meta: [{ title: `${params.username} · Rabbet` }],
   }),
   component: () => (
     <AppShell>

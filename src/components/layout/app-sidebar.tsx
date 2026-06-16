@@ -45,7 +45,7 @@ export function AppSidebar({ profile }: { profile: Profile | null }) {
           <Rabbit className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-base font-bold leading-none">CoelhoBet</p>
+          <p className="text-base font-bold leading-none">Rabbet</p>
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Bolão Virtual</p>
         </div>
       </div>

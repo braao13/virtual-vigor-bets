@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatMoney, formatOdds, formatMatchDate } from "@/utils/formatters";
 
 export const Route = createFileRoute("/my-bets")({
-  head: () => ({ meta: [{ title: "Minhas Apostas — CoelhoBet" }] }),
+  head: () => ({ meta: [{ title: "Minhas Apostas — Rabbet" }] }),
   component: () => (
     <AppShell>
       <MyBets />

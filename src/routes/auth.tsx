@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar — CoelhoBet" },
-      { name: "description", content: "Acesse sua conta no CoelhoBet e comece a apostar com saldo virtual." },
+      { title: "Entrar — Rabbet" },
+      { name: "description", content: "Acesse sua conta no Rabbet e comece a apostar com saldo virtual." },
     ],
   }),
   component: AuthPage,
@@ -66,7 +66,7 @@ function AuthPage() {
             <Rabbit className="h-7 w-7" />
           </div>
           <div>
-            <p className="text-2xl font-bold">CoelhoBet</p>
+            <p className="text-2xl font-bold">Rabbet</p>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Bolão Virtual</p>
           </div>
         </Link>

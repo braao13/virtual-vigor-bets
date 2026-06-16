@@ -125,6 +125,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       matches: {
@@ -304,11 +311,47 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string | null
+          total_bets: number | null
+          total_profit: number | null
+          total_won: number | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          total_bets?: number | null
+          total_profit?: number | null
+          total_won?: number | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          total_bets?: number | null
+          total_profit?: number | null
+          total_won?: number | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       place_bet: {

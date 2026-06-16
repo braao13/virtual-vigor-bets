@@ -10,7 +10,11 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
   async ({ next }) => {
     
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+
+// DEBUG — remover depois
+console.log("[auth-middleware] URL:", SUPABASE_URL);
+console.log("[auth-middleware] KEY:", SUPABASE_PUBLISHABLE_KEY?.slice(0, 20));
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [

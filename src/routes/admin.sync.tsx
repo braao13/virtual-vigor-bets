@@ -1,273 +1,156 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { Activity, AlertCircle, CheckCircle2, RefreshCw, Zap } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { AlertCircle, CheckCircle2, DatabaseZap, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
-import { useAuth } from "@/hooks/use-auth";
-import { syncOddsApi, syncMatchResults } from "@/lib/odds-sync.functions";
-import { syncApiFootballFixtures, syncApiFootballResults } from "@/lib/apifootball-sync.functions";
-import { formatMatchDate } from "@/utils/formatters";
+import { syncMatchesAndOdds } from "@/lib/sync.functions";
 
 export const Route = createFileRoute("/admin/sync")({
-  head: () => ({ meta: [{ title: "Admin — Sync APIs · Rabbet" }] }),
+  head: () => ({ meta: [{ title: "Admin — Sync · CoelhoBet" }] }),
   component: () => (
     <AppShell>
-      <AdminSync />
+      <SyncPanel />
     </AppShell>
   ),
 });
 
-interface SyncLog {
-  action: string;
-  result: string;
-  timestamp: string;
-  success: boolean;
+interface SyncResult {
+  matches_upserted: number;
+  odds_upserted: number;
+  errors: string[];
 }
 
-function AdminSync() {
-  const { user } = useAuth();
+function SyncPanel() {
+  const [lastResult, setLastResult] = useState<SyncResult | null>(null);
 
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-  });
-
-  const { data: matchCounts } = useQuery({
-    queryKey: ["admin-match-counts"],
-    enabled: !!profile?.is_admin,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("matches")
-        .select("status");
-      const all = data ?? [];
-      return {
-        total: all.length,
-        not_started: all.filter((m) => m.status === "not_started").length,
-        finished: all.filter((m) => m.status === "finished").length,
-        live: all.filter((m) => m.status === "live").length,
-      };
-    },
-    refetchInterval: 30_000,
-  });
-
-  const [logs, setLogs] = React.useState<SyncLog[]>([]);
-
-  const addLog = (action: string, result: string, success: boolean) => {
-    setLogs((prev) => [
-      { action, result, timestamp: new Date().toISOString(), success },
-      ...prev.slice(0, 19),
-    ]);
-  };
-
-  const syncOdds = useServerFn(syncOddsApi);
-  const syncResults = useServerFn(syncMatchResults);
-  const syncFixtures = useServerFn(syncApiFootballFixtures);
-  const syncApiResults = useServerFn(syncApiFootballResults);
-
-  const oddsMut = useMutation({
+  const syncMut = useMutation({
     mutationFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) throw new Error("Não autenticado");
-      return syncOdds({ headers: { Authorization: `Bearer ${session.access_token}` } });
+      return syncMatchesAndOdds({
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        data: undefined,
+      });
     },
-    onSuccess: (r) => {
-      const msg = `${r.totalMatches} partidas, ${r.totalOdds} odds`;
-      toast.success("TheOddsAPI: " + msg);
-      addLog("TheOddsAPI — Partidas e Odds", msg + (r.errors.length ? ` (${r.errors.length} erros)` : ""), true);
-    },
-    onError: (e: Error) => {
-      toast.error(e.message);
-      addLog("TheOddsAPI — Partidas e Odds", e.message, false);
-    },
-  });
-
-  const fixturesMut = useMutation({
-    mutationFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Não autenticado");
-      return syncFixtures({ headers: { Authorization: `Bearer ${session.access_token}` } });
-    },
-    onSuccess: (r) => {
-      const msg = `${r.totalSynced} partidas sincronizadas`;
-      toast.success("API-Football: " + msg);
-      addLog("API-Football — Fixtures", msg + (r.errors.length ? ` (${r.errors.length} erros)` : ""), true);
-    },
-    onError: (e: Error) => {
-      toast.error(e.message);
-      addLog("API-Football — Fixtures", e.message, false);
-    },
-  });
-
-  const resultsMut = useMutation({
-    mutationFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Não autenticado");
-      return syncApiResults({ headers: { Authorization: `Bearer ${session.access_token}` } });
-    },
-    onSuccess: (r) => {
-      const msg = `${r.totalUpdated} resultados, ${r.totalSettled} apostas liquidadas`;
-      toast.success("Resultados: " + msg);
-      addLog("API-Football — Resultados", msg + (r.errors.length ? ` (${r.errors.length} erros)` : ""), true);
-    },
-    onError: (e: Error) => {
-      toast.error(e.message);
-      addLog("API-Football — Resultados", e.message, false);
-    },
-  });
-
-  const syncAll = useMutation({
-    mutationFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Não autenticado");
-      const headers = { Authorization: `Bearer ${session.access_token}` };
-      const [odds, fixtures, results] = await Promise.allSettled([
-        syncOdds({ headers }),
-        syncFixtures({ headers }),
-        syncApiResults({ headers }),
-      ]);
-      return { odds, fixtures, results };
-    },
-    onSuccess: () => {
-      toast.success("Sync completo!");
-      addLog("Sync completo", "Odds + Fixtures + Resultados", true);
+    onSuccess: (result) => {
+      setLastResult(result);
+      if (result.errors.length === 0) {
+        toast.success(
+          `Sync concluído — ${result.matches_upserted} partidas · ${result.odds_upserted} odds`,
+        );
+      } else {
+        toast.warning(
+          `Sync com erros — ${result.matches_upserted} partidas · ${result.errors.length} erros`,
+        );
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const isLoading = oddsMut.isPending || fixturesMut.isPending || resultsMut.isPending || syncAll.isPending;
-
-  if (!profile?.is_admin) {
-    return (
-      <div className="px-4 py-12 text-center text-muted-foreground">
-        Acesso restrito.
-      </div>
-    );
-  }
-
-  const actions = [
-    {
-      title: "TheOddsAPI — Odds",
-      description: "Busca partidas e odds dos próximos 7 dias",
-      icon: <Activity className="h-5 w-5 text-blue-400" />,
-      onClick: () => oddsMut.mutate(),
-      loading: oddsMut.isPending,
-      color: "border-blue-500/20 hover:border-blue-500/40",
-    },
-    {
-      title: "API-Football — Fixtures",
-      description: "Sincroniza partidas com logos e dados completos",
-      icon: <Zap className="h-5 w-5 text-yellow-400" />,
-      onClick: () => fixturesMut.mutate(),
-      loading: fixturesMut.isPending,
-      color: "border-yellow-500/20 hover:border-yellow-500/40",
-    },
-    {
-      title: "API-Football — Resultados",
-      description: "Atualiza placar, escanteios, cartões e liquida apostas",
-      icon: <CheckCircle2 className="h-5 w-5 text-primary" />,
-      onClick: () => resultsMut.mutate(),
-      loading: resultsMut.isPending,
-      color: "border-primary/20 hover:border-primary/40",
-    },
-  ];
-
   return (
-    <div className="px-4 md:px-8 py-6 max-w-3xl mx-auto">
-      <header className="mb-6">
-        <div className="flex items-center gap-2 text-primary mb-1">
-          <RefreshCw className="h-5 w-5" />
-          <span className="text-xs font-bold uppercase tracking-wider">Admin</span>
+    <div className="px-4 md:px-8 py-6 max-w-3xl mx-auto space-y-8">
+      {/* Header */}
+      <header className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">Sync de Partidas</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Importa jogos e odds das principais ligas via TheOddsAPI.
+          </p>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold">Sync de APIs</h1>
+        <button
+          onClick={() => syncMut.mutate()}
+          disabled={syncMut.isPending}
+          className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
+        >
+          {syncMut.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {syncMut.isPending ? "Sincronizando..." : "Sincronizar Agora"}
+        </button>
       </header>
 
-      {/* Contadores */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        {[
-          { label: "Total", value: matchCounts?.total ?? 0 },
-          { label: "Aguardando", value: matchCounts?.not_started ?? 0 },
-          { label: "Ao vivo", value: matchCounts?.live ?? 0 },
-          { label: "Finalizadas", value: matchCounts?.finished ?? 0 },
-        ].map((c) => (
-          <div key={c.label} className="p-3 rounded-xl border border-border bg-card text-center">
-            <div className="text-xl font-bold">{c.value}</div>
-            <div className="text-xs text-muted-foreground">{c.label}</div>
-          </div>
-        ))}
-      </div>
+      {/* Ligas sincronizadas */}
+      <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <DatabaseZap className="h-4 w-4 text-primary" />
+          Ligas incluídas no sync
+        </div>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
+          {[
+            "🇧🇷 Brasileirão Série A",
+            "🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League",
+            "🇪🇸 La Liga",
+            "🇮🇹 Serie A",
+            "🇩🇪 Bundesliga",
+            "🇫🇷 Ligue 1",
+            "🏆 Champions League",
+            "🏆 Copa Libertadores",
+          ].map((liga) => (
+            <li key={liga} className="flex items-center gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+              {liga}
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      {/* Sync tudo */}
-      <button
-        disabled={isLoading}
-        onClick={() => syncAll.mutate()}
-        className="w-full mb-6 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
-      >
-        <RefreshCw className={`h-4 w-4 ${syncAll.isPending ? "animate-spin" : ""}`} />
-        {syncAll.isPending ? "Sincronizando tudo..." : "Sync Completo (Tudo)"}
-      </button>
-
-      {/* Ações individuais */}
-      <div className="space-y-3 mb-6">
-        {actions.map((a) => (
-          <button
-            key={a.title}
-            disabled={isLoading}
-            onClick={a.onClick}
-            className={`w-full flex items-center gap-4 p-4 rounded-xl border bg-card text-left transition-colors disabled:opacity-50 ${a.color}`}
-          >
-            <div className="shrink-0">{a.icon}</div>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm">{a.title}</div>
-              <div className="text-xs text-muted-foreground">{a.description}</div>
+      {/* Resultado do último sync */}
+      {lastResult && (
+        <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <p className="text-sm font-semibold">Último resultado</p>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-bold text-primary">{lastResult.matches_upserted}</p>
+              <p className="text-xs text-muted-foreground mt-1">Partidas</p>
             </div>
-            {a.loading ? (
-              <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
-            ) : (
-              <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Log de execuções */}
-      {logs.length > 0 && (
-        <>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            Log de execuções
-          </h2>
-          <div className="space-y-2">
-            {logs.map((log, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card">
-                {log.success ? (
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium">{log.action}</div>
-                  <div className="text-xs text-muted-foreground">{log.result}</div>
-                </div>
-                <div className="text-xs text-muted-foreground shrink-0">
-                  {formatMatchDate(log.timestamp)}
-                </div>
-              </div>
-            ))}
+            <div>
+              <p className="text-2xl font-bold text-primary">{lastResult.odds_upserted}</p>
+              <p className="text-xs text-muted-foreground mt-1">Odds</p>
+            </div>
+            <div>
+              <p
+                className={`text-2xl font-bold ${lastResult.errors.length > 0 ? "text-destructive" : "text-primary"}`}
+              >
+                {lastResult.errors.length}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Erros</p>
+            </div>
           </div>
-        </>
+
+          {lastResult.errors.length > 0 && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
+                <AlertCircle className="h-3.5 w-3.5" />
+                Erros encontrados
+              </div>
+              <ul className="space-y-0.5">
+                {lastResult.errors.map((err, i) => (
+                  <li key={i} className="text-xs text-muted-foreground font-mono">
+                    {err}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
       )}
+
+      {/* Info */}
+      <section className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground space-y-2">
+        <p className="font-semibold text-foreground">Como funciona</p>
+        <ul className="space-y-1 list-disc list-inside">
+          <li>Busca eventos futuros nas ligas configuradas</li>
+          <li>Faz upsert das partidas evitando duplicatas</li>
+          <li>Desativa odds antigas e insere as atualizadas</li>
+          <li>Mercados: Resultado Final, Dupla Chance, Ambas Marcam, Total de Gols</li>
+        </ul>
+      </section>
     </div>
   );
 }
-
-// React precisa ser importado para useState
-import React from "react";

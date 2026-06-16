@@ -220,6 +220,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_admin: boolean
           total_bets: number
           total_profit: number
           total_won: number
@@ -232,6 +233,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          is_admin?: boolean
           total_bets?: number
           total_profit?: number
           total_won?: number
@@ -244,6 +246,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_admin?: boolean
           total_bets?: number
           total_profit?: number
           total_won?: number

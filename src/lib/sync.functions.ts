@@ -227,3 +227,5 @@ export const syncMatches = createServerFn({ method: "POST" })
 
     return result;
   });
+
+export const syncMatchesAndOdds = syncMatches;
